@@ -10,10 +10,11 @@
         <module name="me-eureka-server" />
       </profile>
       <profile name="Annotation profile for microservicios-23316" enabled="true">
-        <sourceOutputDir name="../ms-careNotifier/target/generated-sources/annotations" />
-        <sourceTestOutputDir name="../ms-careNotifier/target/generated-test-sources/test-annotations" />
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.38/lombok-1.18.38.jar" />
         </processorPath>
         <module name="ms-catalogo (2)" />

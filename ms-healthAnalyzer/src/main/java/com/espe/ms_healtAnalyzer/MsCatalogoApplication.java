@@ -1,4 +1,4 @@
-package com.espe.ms_catalogo;
+package com.espe.ms_healtAnalyzer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

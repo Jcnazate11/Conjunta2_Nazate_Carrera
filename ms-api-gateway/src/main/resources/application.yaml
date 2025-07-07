@@ -11,28 +11,10 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
-        - id: publicaciones-autor
-          uri: lb://SERVICE-PUBLICACIONES
+        - id: health-analyzer-route
+          uri: lb://ms-health-analyzer
           predicates:
-            - Path=/api/v1/autores/**
-          filters:
-            - StripPrefix=2
-        - id: publicaciones-libros
-          uri: lb://SERVICE-PUBLICACIONES
-          predicates:
-            - Path=/api/v1/libros/**
-          filters:
-            - StripPrefix=2
-        - id: notificaciones-route
-          uri: lb://SERVICE-NOTIFICACIONES
-          predicates:
-            - Path=/api/v1/notificaciones/**
-          filters:
-            - StripPrefix=2
-        - id: catalogo-route
-          uri: lb://SERVICE-CATALOGO
-          predicates:
-            - Path=/api/v1/catalogos/**
+            - Path=/api/v1/health-analyzer/**
           filters:
             - StripPrefix=2
 

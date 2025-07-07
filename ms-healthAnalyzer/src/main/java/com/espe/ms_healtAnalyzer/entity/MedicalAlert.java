@@ -1,5 +1,4 @@
-package com.espe.ms_catalogo.entity;
-
+package com.espe.ms_healtAnalyzer.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,20 +7,20 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
+
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-public class Catalogo {
+public class MedicalAlert {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String tipo;
-    private String titulo;
-    private int anioPublicacion;
-    private String resumen;
-    private String editorial;
-    private String isbn;
+    private Long alertId;
 
+    private String type;
+    private String deviceId;
+    private double value;
+    private double threshold;
+    private LocalDateTime timestamp;
 }
