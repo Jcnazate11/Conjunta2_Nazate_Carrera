@@ -1,13 +1,12 @@
-package com.espe.ms_catalogo;
-
+package com.espe.ms_patientdatacollector;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MsCatalogoApplication {
+public class MsPatientDataCollectorApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(MsCatalogoApplication.class, args);
+		SpringApplication.run(MsPatientDataCollectorApplication.class, args);
 	}
 
 }
