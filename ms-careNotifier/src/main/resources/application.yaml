@@ -3,10 +3,10 @@ server:
 
 spring:
   application:
-    name: SERVICE-CATALOGO
+    name: ms-careNotifier
 
   datasource:
-    url: jdbc:postgresql://localhost:26257/catalogos_db?user=root&password=
+    url: jdbc:postgresql://localhost:26257/notifier_db?user=root&password=
     username: root
     password:
   jpa:

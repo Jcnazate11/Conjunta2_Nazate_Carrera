@@ -20,9 +20,15 @@ spring:
         - id: patient-data-collector-route
           uri: lb://ms-patient-data-collector
           predicates:
-            - Path=/vital-signs/**
+            - Path=/api/v1/vital-signs/**
           filters:
               - StripPrefix=0
+        - id: care-notifier-route
+          uri: lb://ms-care-notifier
+          predicates:
+            - Path=/api/v1/care-notifier/**
+          filters:
+            - StripPrefix=0
 
 eureka:
   client:
