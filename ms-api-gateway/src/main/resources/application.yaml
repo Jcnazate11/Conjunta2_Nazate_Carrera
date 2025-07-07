@@ -17,6 +17,12 @@ spring:
             - Path=/api/v1/health-analyzer/**
           filters:
             - StripPrefix=2
+        - id: patient-data-collector-route
+          uri: lb://ms-patient-data-collector
+          predicates:
+            - Path=/vital-signs/**
+          filters:
+              - StripPrefix=0
 
 eureka:
   client:
