@@ -1,10 +1,10 @@
-package com.espe.ms_catalogo;
+package com.espe.ms_carenotifier;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class MsCatalogoApplicationTests {
+class MsCareNotifierApplicationTests {
 
 	@Test
 	void contextLoads() {
