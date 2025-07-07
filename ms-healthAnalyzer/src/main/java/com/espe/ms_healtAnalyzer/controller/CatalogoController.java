@@ -1,8 +1,8 @@
-package com.espe.ms_catalogo.controller;
+package com.espe.ms_healtAnalyzer.controller;
 
-import com.espe.ms_catalogo.dto.CatalogoDto;
-import com.espe.ms_catalogo.entity.Catalogo;
-import com.espe.ms_catalogo.service.CatalogoService;
+import com.espe.ms_healtAnalyzer.dto.CatalogoDto;
+import com.espe.ms_healtAnalyzer.entity.Catalogo;
+import com.espe.ms_healtAnalyzer.service.CatalogoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
