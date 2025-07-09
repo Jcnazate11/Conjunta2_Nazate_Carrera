@@ -11,18 +11,25 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: update #create-drop
+      ddl-auto: update # create-drop
     properties:
       hibernate:
         show_sql: true
         format_sql: true
         use_sql_comments: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   rabbitmq:
     host: localhost
     port: 5672
     username: admin
     password: admin
+    queue:
+      new-vital-sign: vital-sign-queue
+    exchange:
+      medical-events: medical-events-exchange
+    routing-key:
+      vital-sign: vital-sign-routing-key
 
 eureka:
   client:
@@ -40,4 +47,3 @@ management:
     web:
       exposure:
         include: health,info
-

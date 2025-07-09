@@ -23,6 +23,13 @@ spring:
     port: 5672
     username: admin
     password: admin
+rabbitmq:
+  queue:
+    new-vital-sign: vital-sign-queue
+  exchange:
+    medical-events: medical-events-exchange
+  routing-key:
+    vital-sign: vital-sign-routing-key
 
 eureka:
   client:

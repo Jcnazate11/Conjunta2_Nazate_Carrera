@@ -14,21 +14,21 @@ spring:
         - id: health-analyzer-route
           uri: lb://ms-health-analyzer
           predicates:
-            - Path=/api/v1/health-analyzer/**
+            - Path=/conjunta/2p/health-analyzer/**
           filters:
             - StripPrefix=2
         - id: patient-data-collector-route
           uri: lb://ms-patient-data-collector
           predicates:
-            - Path=/api/v1/vital-signs/**
+            - Path=/conjunta/2p/vital-signs/**
           filters:
-              - StripPrefix=0
+              - StripPrefix=2
         - id: care-notifier-route
           uri: lb://ms-care-notifier
           predicates:
-            - Path=/api/v1/care-notifier/**
+            - Path=/conjunta/2p/care-notifier/**
           filters:
-            - StripPrefix=0
+            - StripPrefix=2
 
 eureka:
   client:

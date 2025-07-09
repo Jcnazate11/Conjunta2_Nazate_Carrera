@@ -14,6 +14,10 @@ public class NotificationResponseDTO {
     private String status;         // Estado de la notificación (ej. ENVIADA, ERROR)
     private String message;        // Mensaje sobre el resultado del envío de la notificación
 
-    public NotificationResponseDTO(Object o, String error, String s) {
+    public NotificationResponseDTO(String status, String message) {
+        this.notificationId = null;
+        this.recipient = "unknown";
+        this.status = status;
+        this.message = message;
     }
 }

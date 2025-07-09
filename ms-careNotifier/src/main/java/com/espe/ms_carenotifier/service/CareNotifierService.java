@@ -1,10 +1,11 @@
 package com.espe.ms_carenotifier.service;
 
 import com.espe.ms_carenotifier.dto.AlertDTO;
-import com.espe.ms_carenotifier.dto.NotificationDTO;
 import com.espe.ms_carenotifier.dto.NotificationResponseDTO;
 import com.espe.ms_carenotifier.entity.Notification;
 import com.espe.ms_carenotifier.repository.NotificationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,92 +17,97 @@ import java.util.List;
 @Service
 public class CareNotifierService {
 
+    private static final Logger log = LoggerFactory.getLogger(CareNotifierService.class);
+
     @Autowired
     private NotificationRepository notificationRepository;
 
-    // Almacenamiento temporal para alertas de baja prioridad
-    private List<AlertDTO> lowPriorityAlerts = new ArrayList<>();
+    // Buffer para alertas de baja prioridad
+    private final List<AlertDTO> lowPriorityAlerts = new ArrayList<>();
 
-    // Enviar notificación
+    /**
+     * Recibe una alerta y envía la notificación apropiada.
+     */
     public NotificationResponseDTO sendNotification(AlertDTO alertDTO) {
-        // Clasificación de la alerta por gravedad
-        String severity = getSeverity(alertDTO.getType());
+        String severity = classifySeverity(alertDTO.getType());
 
-        // Si es de emergencia, se envía inmediatamente
-        if ("EMERGENCY".equals(severity)) {
-            sendEmergencyNotification(alertDTO);
-        } else if ("WARNING".equals(severity)) {
-            // Las alertas de advertencia se almacenan y se envían cada 30 minutos
-            lowPriorityAlerts.add(alertDTO);
-            return new NotificationResponseDTO(null, alertDTO.getDeviceId(), "PENDIENTE", "Alerta de advertencia registrada.");
-        } else {
-            sendInformativeNotification(alertDTO);
+        switch (severity) {
+            case "EMERGENCY" -> {
+                log.info("🚨 Emergencia: enviando notificación inmediata");
+                sendAllChannels(alertDTO);
+                return persistAndRespond(alertDTO, "ENVIADA", "Notificación crítica enviada");
+            }
+            case "WARNING" -> {
+                log.info("⚠️ Advertencia: almacenando para envío agrupado");
+                lowPriorityAlerts.add(alertDTO);
+                return new NotificationResponseDTO(null, "pendiente", "PENDIENTE", "Se enviará en lote cada 30 min");
+            }
+            default -> {
+                log.info("ℹ️ Info: enviando notificación informativa");
+                sendAllChannels(alertDTO);
+                return persistAndRespond(alertDTO, "ENVIADA", "Notificación informativa enviada");
+            }
         }
-
-        // Guardar la notificación en la base de datos
-        Notification notification = new Notification();
-        notification.setEventType(alertDTO.getType());
-        notification.setRecipient("doctor@example.com"); // Ejemplo de destinatario
-        notification.setStatus("ENVIADA");
-        notification.setTimestamp(LocalDateTime.now());
-        notificationRepository.save(notification);
-
-        return new NotificationResponseDTO(notification.getNotificationId(), "doctor@example.com", "ENVIADA", "Notificación enviada correctamente");
     }
 
-    private String getSeverity(String alertType) {
-        // Clasificación de gravedad de la alerta
-        if (alertType.contains("Critical")) {
-            return "EMERGENCY";
-        } else if (alertType.contains("Low")) {
-            return "WARNING";
-        }
-        return "INFO";
-    }
-
-    private void sendEmergencyNotification(AlertDTO alertDTO) {
-        // Lógica para enviar notificación de emergencia
-        System.out.println("Enviando notificación de emergencia a: doctor@example.com");
-        System.out.println("Alerta: " + alertDTO.getType() + " con valor: " + alertDTO.getValue());
-    }
-
-    private void sendInformativeNotification(AlertDTO alertDTO) {
-        // Lógica para enviar notificación informativa
-        System.out.println("Enviando notificación informativa a: doctor@example.com");
-        System.out.println("Alerta: " + alertDTO.getType() + " con valor: " + alertDTO.getValue());
-    }
-
-    // Tarea programada que envía las alertas de baja prioridad cada 30 minutos
-    @Scheduled(fixedRate = 1800000)  // Ejecuta cada 30 minutos
+    /**
+     * Tarea programada: envía notificaciones de baja prioridad acumuladas cada 30 min.
+     */
+    @Scheduled(fixedRate = 1800000) // 30 min
     public void sendLowPriorityAlerts() {
         if (!lowPriorityAlerts.isEmpty()) {
-            System.out.println("Enviando alertas de baja prioridad...");
+            log.info("📤 Enviando {} alertas de baja prioridad...", lowPriorityAlerts.size());
             for (AlertDTO alert : lowPriorityAlerts) {
-                sendInformativeNotification(alert);  // Simulación de envío
+                sendAllChannels(alert);
+                persistAndRespond(alert, "ENVIADA", "Enviada desde buffer");
             }
-            lowPriorityAlerts.clear();  // Limpiar la lista después de enviarlas
+            lowPriorityAlerts.clear();
         }
     }
 
-    // Método para simular el envío de correo
+    /**
+     * Simula el envío de notificaciones por todos los canales.
+     */
+    private void sendAllChannels(AlertDTO alert) {
+        sendEmail("doctor@hospital.com", "Alerta médica: " + alert.getType(), alert.toString());
+        sendSMS("+593999999999", alert.toString());
+        sendPushNotification("medico-123", alert.toString());
+    }
+
+    private NotificationResponseDTO persistAndRespond(AlertDTO alert, String status, String message) {
+        Notification n = new Notification();
+        n.setEventType(alert.getType());
+        n.setRecipient("doctor@hospital.com");
+        n.setStatus(status);
+        n.setTimestamp(LocalDateTime.now());
+        notificationRepository.save(n);
+
+        return new NotificationResponseDTO(n.getNotificationId(), n.getRecipient(), status, message);
+    }
+
+    private String classifySeverity(String type) {
+        return switch (type) {
+            case "CriticalHeartRateAlert", "OxygenLevelCritical" -> "EMERGENCY";
+            case "DeviceOfflineAlert" -> "WARNING";
+            default -> "INFO";
+        };
+    }
+
+    // Simulaciones de canales
+
     public void sendEmail(String recipient, String subject, String body) {
-        // Lógica para enviar correo (simulada aquí como un log)
-        System.out.println("Enviando correo a: " + recipient);
+        System.out.println("📧 Correo a: " + recipient);
         System.out.println("Asunto: " + subject);
         System.out.println("Cuerpo: " + body);
     }
 
-    // Método para simular el envío de SMS
     public void sendSMS(String phoneNumber, String message) {
-        // Lógica para enviar SMS (simulada aquí como un log)
-        System.out.println("Enviando SMS a: " + phoneNumber);
+        System.out.println("📲 SMS a: " + phoneNumber);
         System.out.println("Mensaje: " + message);
     }
 
-    // Método para simular el envío de Push Notification
     public void sendPushNotification(String recipient, String message) {
-        // Lógica para enviar Push Notification (simulada aquí como un log)
-        System.out.println("Enviando Push Notification a: " + recipient);
+        System.out.println("🔔 Push Notification a: " + recipient);
         System.out.println("Mensaje: " + message);
     }
 }

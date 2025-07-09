@@ -15,12 +15,11 @@ import java.time.LocalDateTime;
 @Setter
 public class MedicalAlert {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long alertId;
+    private String alertId;
 
-    private String type;
     private String deviceId;
-    private double value;
-    private double threshold;
+    private String type;
+    private Double value;
+    private Double threshold;
     private LocalDateTime timestamp;
 }

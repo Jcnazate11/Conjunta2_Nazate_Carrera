@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class MsCatalogoApplication {
+public class MsHealthAnalyzer{
 
-	public static void main(String[] args) {
-		SpringApplication.run(MsCatalogoApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(MsHealthAnalyzer.class, args);
+    }
 
 }

@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,8 +18,8 @@ import java.util.UUID;
 
 @Configuration
 @EnableScheduling
-@Component
 public class ScheduledTasks {
+
     private static final Logger logger = LoggerFactory.getLogger(ScheduledTasks.class);
 
     @Autowired
@@ -37,17 +36,19 @@ public class ScheduledTasks {
         List<String> deviceIds = vitalSignRepository.findAllDeviceIds();
         for (String deviceId : deviceIds) {
             for (String type : List.of("heart-rate", "oxygen", "blood-pressure-systolic", "blood-pressure-diastolic")) {
-                List<VitalSign> vitalSigns = vitalSignRepository.findByDeviceIdAndTimestampBetween(deviceId, startTime, endTime);
+                List<VitalSign> vitalSigns = vitalSignRepository.findByDeviceIdAndTypeAndTimestampBetween(
+                        deviceId, type, startTime, endTime);
+
                 if (!vitalSigns.isEmpty()) {
                     double average = vitalSigns.stream().mapToDouble(VitalSign::getValue).average().orElse(0.0);
                     double max = vitalSigns.stream().mapToDouble(VitalSign::getValue).max().orElse(0.0);
                     double min = vitalSigns.stream().mapToDouble(VitalSign::getValue).min().orElse(0.0);
 
                     DailyReportEvent report = new DailyReportEvent(
-                            "RPT-" + UUID.randomUUID().toString(), deviceId, type, average, max, min, LocalDateTime.now()
+                            "RPT-" + UUID.randomUUID(), deviceId, type, average, max, min, endTime
                     );
                     rabbitTemplate.convertAndSend("reports-exchange", "reports.daily", report);
-                    logger.info("Reporte diario generado para dispositivo: {}, tipo: {}", deviceId, type);
+                    logger.info("Reporte diario generado: {}", report);
                 }
             }
         }
@@ -62,7 +63,7 @@ public class ScheduledTasks {
             List<VitalSign> recentData = vitalSignRepository.findByDeviceIdAndTimestampAfter(deviceId, threshold);
             if (recentData.isEmpty()) {
                 AlertEvent alert = new AlertEvent(
-                        "ALT-" + UUID.randomUUID().toString(),
+                        "ALT-" + UUID.randomUUID(),
                         "DeviceOfflineAlert",
                         deviceId,
                         0.0,
@@ -70,9 +71,8 @@ public class ScheduledTasks {
                         LocalDateTime.now()
                 );
                 rabbitTemplate.convertAndSend("alerts-exchange", "alerts.critical", alert);
-                logger.warn("Alerta de dispositivo inactivo generada para: {}", deviceId);
+                logger.warn("Dispositivo inactivo detectado: {}", deviceId);
             }
         }
     }
 }
-

@@ -1,17 +1,20 @@
 package com.espe.ms_patientdatacollector.dto;
 
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NewVitalSignEventDTO {
-
-    private String eventId;      // Identificador único del evento
-    private String deviceId;     // ID del dispositivo médico
-    private String type;         // Tipo de signo vital
-    private Double value;        // Valor del signo vital
-    private String timestamp;    // Marca de tiempo
+public class NewVitalSignEventDTO implements Serializable {
+    private String eventId;
+    private String deviceId;
+    private String type;
+    private Double value;
+    private LocalDateTime timestamp; // Cambiado a LocalDateTime
 }

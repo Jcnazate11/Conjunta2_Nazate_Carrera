@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>ec.edu.espe</groupId>
-	<artifactId>me-eureka-server</artifactId>
+	<artifactId>ms-eureka-server</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>me-eureka-server</name>
+	<name>ms-eureka-server</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

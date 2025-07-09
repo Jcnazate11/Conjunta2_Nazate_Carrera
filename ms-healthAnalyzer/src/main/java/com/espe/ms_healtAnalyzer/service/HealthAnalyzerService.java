@@ -2,7 +2,6 @@ package com.espe.ms_healtAnalyzer.service;
 
 import com.espe.ms_healtAnalyzer.dto.AlertEvent;
 import com.espe.ms_healtAnalyzer.dto.NewVitalSignEvent;
-
 import com.espe.ms_healtAnalyzer.entity.MedicalAlert;
 import com.espe.ms_healtAnalyzer.entity.VitalSign;
 import com.espe.ms_healtAnalyzer.repository.MedicalAlertRespository;
@@ -18,108 +17,134 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Service
+public class HealthAnalyzerService {
 
-    @Service
-    public class HealthAnalyzerService {
-        private static final Logger logger = LoggerFactory.getLogger(HealthAnalyzerService.class);
+    private static final Logger logger = LoggerFactory.getLogger(HealthAnalyzerService.class);
 
-        @Autowired
-        private VitalSignRepository vitalSignRepository;
+    @Autowired
+    private VitalSignRepository vitalSignRepository;
 
-        @Autowired
-        private MedicalAlertRespository medicalAlertRepository;
+    @Autowired
+    private MedicalAlertRespository medicalAlertRepository;
 
-        @Autowired
-        private RabbitTemplate rabbitTemplate;
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
-        @RabbitListener(queues = "vital-signs-queue")
-        @Transactional
-        public void processVitalSign(NewVitalSignEvent event) {
-            logger.info("Recibido evento NewVitalSignEvent para dispositivo: {}", event.getDeviceId());
+    @RabbitListener(queues = "vital-sign-queue")
+    @Transactional
+    public void processVitalSign(NewVitalSignEvent event) {
+        logger.info("📥 Evento recibido: {}", event);
 
-            // Validar formato y rango de datos
-            if (!isValidEvent(event)) {
-                logger.error("Evento inválido: {}", event);
-                return;
-            }
-
-            // Guardar signo vital en CockroachDB
-            VitalSign vitalSign = new VitalSign();
-            vitalSign.setDeviceId(event.getDeviceId());
-            vitalSign.setType(event.getType());
-            vitalSign.setValue(event.getValue());
-            vitalSign.setTimestamp(event.getTimestamp());
-            vitalSignRepository.save(vitalSign);
-
-            // Analizar signos vitales y generar alertas
-            analyzeVitalSign(event);
+        if (!isValidEvent(event)) {
+            logger.warn("⚠️ Evento inválido descartado: {}", event);
+            return;
         }
 
-        private boolean isValidEvent(NewVitalSignEvent event) {
-            if (event.getDeviceId() == null || event.getType() == null || event.getTimestamp() == null) {
-                return false;
-            }
-            if (event.getType().equals("heart-rate") && (event.getValue() > 200 || event.getValue() < 30)) {
-                return false;
-            }
-            return true;
-        }
+        // Guardar el signo vital
+        VitalSign vitalSign = new VitalSign();
+        vitalSign.setDeviceId(event.getDeviceId());
+        vitalSign.setType(event.getType());
+        vitalSign.setValue(event.getValue());
+        vitalSign.setTimestamp(event.getTimestamp());
+        vitalSignRepository.save(vitalSign);
 
-        private void analyzeVitalSign(NewVitalSignEvent event) {
-            switch (event.getType()) {
-                case "heart-rate":
-                    if (event.getValue() > 140 || event.getValue() < 40) {
-                        generateAlert("CriticalHeartRateAlert", event.getDeviceId(), event.getValue(),
-                                event.getValue() > 140 ? 140 : 40, event.getTimestamp());
-                    }
-                    break;
-                case "oxygen":
-                    if (event.getValue() < 90) {
-                        generateAlert("OxygenLevelCritical", event.getDeviceId(), event.getValue(), 90, event.getTimestamp());
-                    }
-                    break;
-                case "blood-pressure-systolic":
-                    if (event.getValue() > 180) {
-                        generateAlert("HighBloodPressureAlert", event.getDeviceId(), event.getValue(), 180, event.getTimestamp());
-                    }
-                    break;
-                case "blood-pressure-diastolic":
-                    if (event.getValue() > 120) {
-                        generateAlert("HighBloodPressureAlert", event.getDeviceId(), event.getValue(), 120, event.getTimestamp());
-                    }
-                    break;
-            }
-        }
+        // Analizar el evento para detectar anomalías
+        analyzeVitalSign(event);
+    }
 
-        private void generateAlert(String type, String deviceId, double value, double threshold, LocalDateTime timestamp) {
-            String alertId = "ALT-" + UUID.randomUUID().toString();
-            AlertEvent alert = new AlertEvent(alertId, type, deviceId, value, threshold, timestamp);
+    private boolean isValidEvent(NewVitalSignEvent event) {
+        return event.getDeviceId() != null
+                && event.getType() != null
+                && event.getTimestamp() != null
+                && (!event.getType().equals("heart-rate")
+                || (event.getValue() >= 30 && event.getValue() <= 200));
+    }
 
-            // Guardar alerta en CockroachDB
-            MedicalAlert medicalAlert = new MedicalAlert();
-            medicalAlert.setType(type);
-            medicalAlert.setDeviceId(deviceId);
-            medicalAlert.setValue(value);
-            medicalAlert.setThreshold(threshold);
-            medicalAlert.setTimestamp(timestamp);
-            medicalAlertRepository.save(medicalAlert);
+    private void analyzeVitalSign(NewVitalSignEvent event) {
+        String type = event.getType();
+        double value = event.getValue();
+        String deviceId = event.getDeviceId();
+        LocalDateTime timestamp = event.getTimestamp();
 
-            // Publicar alerta en RabbitMQ con reintentos
-            try {
-                rabbitTemplate.convertAndSend("alerts-exchange", "alerts.critical", alert);
-                logger.info("Alerta {} enviada para dispositivo: {}", type, deviceId);
-            } catch (Exception e) {
-                logger.error("Error al enviar alerta a RabbitMQ, almacenando localmente: {}", e.getMessage());
-                // Almacenar localmente en caso de fallo (usando SQLite o en memoria)
-                storeAlertLocally(alert);
-            }
-        }
+        switch (type) {
+            case "heart-rate":
+            case "heartRate":  // Compatibilidad
+                if (value > 140 || value < 40) {
+                    generateAlert("CriticalHeartRateAlert", deviceId, value, value > 140 ? 140 : 40, timestamp);
+                }
+                break;
 
-        private void storeAlertLocally(AlertEvent alert) {
-            // Implementar almacenamiento local (por ejemplo, en SQLite o en memoria)
-            // Para este ejemplo, solo registramos el intento
-            logger.warn("Alerta almacenada localmente: {}", alert);
-            // TODO: Implementar SQLite o almacenamiento en memoria y lógica de reintento
+            case "oxygen":
+                if (value < 90) {
+                    generateAlert("OxygenLevelCritical", deviceId, value, 90, timestamp);
+                }
+                break;
+
+            case "blood-pressure-systolic":
+            case "systolicPressure":
+                if (value > 180) {
+                    generateAlert("BloodPressureCritical", deviceId, value, 180, timestamp);
+                }
+                break;
+
+            case "blood-pressure-diastolic":
+            case "diastolicPressure":
+                if (value > 120) {
+                    generateAlert("BloodPressureCritical", deviceId, value, 120, timestamp);
+                }
+                break;
+
+            default:
+                logger.info("ℹ️ Tipo de signo vital no monitoreado para alertas: {}", type);
         }
     }
 
+    private void generateAlert(String type, String deviceId, double value, double threshold, LocalDateTime timestamp) {
+        String alertId = "ALT-" + UUID.randomUUID();
+        String routingKey;
+
+        // Crear evento para RabbitMQ
+        AlertEvent alert = new AlertEvent(alertId, type, deviceId, value, threshold, timestamp);
+
+        // Guardar alerta médica en la BD
+        MedicalAlert medicalAlert = new MedicalAlert();
+        medicalAlert.setAlertId(alertId);
+        medicalAlert.setType(type);
+        medicalAlert.setDeviceId(deviceId);
+        medicalAlert.setValue(value);
+        medicalAlert.setThreshold(threshold);
+        medicalAlert.setTimestamp(timestamp);
+        medicalAlertRepository.save(medicalAlert);
+
+        try {
+            switch (type) {
+                case "CriticalHeartRateAlert":
+                    routingKey = "alerts.heart-rate";
+                    break;
+                case "OxygenLevelCritical":
+                    routingKey = "alerts.oxygen";
+                    break;
+                case "BloodPressureCritical":
+                    routingKey = "alerts.pressure";
+                    break;
+                case "DeviceOfflineAlert":
+                    routingKey = "alerts.device-offline";
+                    break;
+                default:
+                    routingKey = "alerts.unknown";
+            }
+
+            rabbitTemplate.convertAndSend("alerts-exchange", routingKey, alert);
+            logger.info("🚨 Alerta enviada: {}", alert);
+        } catch (Exception e) {
+            logger.error("❌ Error al enviar alerta a RabbitMQ: {}", e.getMessage());
+            storeAlertLocally(alert);
+        }
+    }
+
+    private void storeAlertLocally(AlertEvent alert) {
+        // Simulación de fallback local (ejemplo)
+        logger.warn("🔁 Alerta almacenada localmente (simulado): {}", alert);
+    }
+}

@@ -11,25 +11,33 @@ import org.springframework.stereotype.Component;
 public class CareNotifierEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(CareNotifierEventListener.class);
-
     private final CareNotifierService careNotifierService;
 
     public CareNotifierEventListener(CareNotifierService careNotifierService) {
         this.careNotifierService = careNotifierService;
     }
 
-    // Escuchar eventos de RabbitMQ
-    @RabbitListener(queues = "${rabbitmq.queue.alerts}")  // Asumiendo que la cola se llama "alerts"
-    public void onAlertReceived(AlertDTO alertDTO) {
-        try {
-            log.info("Recibiendo evento de alerta para el dispositivo: {}", alertDTO.getDeviceId());
+    @RabbitListener(queues = "heart-rate-alert-queue")
+    public void listenHeartRate(AlertDTO alert) {
+        log.info("💓 Alerta de ritmo cardíaco recibida: {}", alert);
+        careNotifierService.sendNotification(alert);
+    }
 
-            // Enviar la notificación a través del servicio
-            careNotifierService.sendNotification(alertDTO);
+    @RabbitListener(queues = "oxygen-alert-queue")
+    public void listenOxygen(AlertDTO alert) {
+        log.info("🫁 Alerta de oxígeno recibida: {}", alert);
+        careNotifierService.sendNotification(alert);
+    }
 
-        } catch (Exception e) {
-            log.error("Error procesando la alerta: {}", e.getMessage());
-            // Aquí se podría almacenar el error o intentar reintentar según la estrategia de resiliencia
-        }
+    @RabbitListener(queues = "pressure-alert-queue")
+    public void listenPressure(AlertDTO alert) {
+        log.info("🩸 Alerta de presión recibida: {}", alert);
+        careNotifierService.sendNotification(alert);
+    }
+
+    @RabbitListener(queues = "device-offline-alert-queue")
+    public void listenDeviceOffline(AlertDTO alert) {
+        log.info("🔌 Alerta de dispositivo desconectado recibida: {}", alert);
+        careNotifierService.sendNotification(alert);
     }
 }

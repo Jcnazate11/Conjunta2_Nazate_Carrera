@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: ms-careNotifier
+    name: ms-care-notifier
 
   datasource:
     url: jdbc:postgresql://localhost:26257/notifier_db?user=root&password=
@@ -11,18 +11,31 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: update #create-drop
+      ddl-auto: update
     properties:
       hibernate:
         show_sql: true
         format_sql: true
         use_sql_comments: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   rabbitmq:
     host: localhost
     port: 5672
     username: admin
     password: admin
+
+rabbitmq:
+  queue:
+    alerts: alerts-critical-queue
+    heart-rate: heart-rate-alert-queue
+    oxygen: oxygen-alert-queue
+    pressure: pressure-alert-queue
+    device-offline: device-offline-alert-queue
+  exchange:
+    medical-events: alerts-exchange
+  routing-key:
+    alert: alerts.#
 
 eureka:
   client:
@@ -40,4 +53,3 @@ management:
     web:
       exposure:
         include: health,info
-

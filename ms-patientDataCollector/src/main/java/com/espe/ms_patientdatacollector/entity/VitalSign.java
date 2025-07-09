@@ -1,13 +1,11 @@
 package com.espe.ms_patientdatacollector.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -15,11 +13,14 @@ import java.time.LocalDateTime;
 public class VitalSign {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    private String deviceId;    // Identificador del dispositivo médico
-    private String type;        // Tipo de signo vital (ej. "heart-rate", "blood-pressure", etc.)
-    private Double value;       // Valor del signo vital
-    private LocalDateTime timestamp; // Marca de tiempo de la lectura del signo vital
+    private String deviceId;
+    private String type;
+    private Double value;
+    private LocalDateTime timestamp;
+
+    @Column(unique = true)
+    private String eventId;
 }

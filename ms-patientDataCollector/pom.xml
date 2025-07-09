@@ -5,17 +5,17 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.0</version>
+		<version>3.3.4</version> <!-- Cambiado a 3.3.4 -->
 		<relativePath/>
 	</parent>
 	<groupId>com.espe</groupId>
 	<artifactId>ms-patient-data-collector</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ms-patient-data-collector</name>
-	<description>Microservicio para recolectar y almacenar datos de pacientes de dispositivos IoT</description>
+	<description>Microservicio para recolectar y almacenar datos de dispositivos IoT médicos</description>
 	<properties>
 		<java.version>21</java.version>
-		<spring-cloud.version>2023.0.3</spring-cloud.version>
+		<spring-cloud.version>2023.0.3</spring-cloud.version> <!-- Compatible con 3.3.x -->
 	</properties>
 	<dependencies>
 		<dependency>
@@ -50,6 +50,10 @@
 			<groupId>org.springframework.amqp</groupId>
 			<artifactId>spring-rabbit-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
